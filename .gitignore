@@ -28,3 +28,13 @@ dist-ssr
 .env
 .next/
 next-env.d.ts
+
+# Docker
+.docker/
+docker-data/
+docker-volumes/
+*.pid
+
+# Docker Compose overrides (local only)
+docker-compose.override.yml
+compose.override.yml

@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
-import { getApiKey } from "@/lib/api-key";
+import { getApiKey, getBearerToken } from "@/lib/api-key";
 import { useThreads } from "./Thread";
 import { toast } from "sonner";
 
@@ -43,6 +43,14 @@ const useTypedStream = useStream<
 type StreamContextType = ReturnType<typeof useTypedStream>;
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
 
+type BearerTokenContextType = {
+  bearerToken: string;
+  setBearerToken: (token: string) => void;
+};
+const BearerTokenContext = createContext<BearerTokenContextType | undefined>(
+  undefined,
+);
+
 async function sleep(ms = 4000) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -51,11 +59,13 @@ async function checkGraphStatus(
   apiUrl: string,
   apiKey: string | null,
   authScheme?: string,
+  bearerToken?: string,
 ): Promise<boolean> {
   try {
     const headers = new Headers();
     if (apiKey) headers.set("X-Api-Key", apiKey);
     if (authScheme) headers.set("X-Auth-Scheme", authScheme);
+    if (bearerToken) headers.set("Authorization", `Bearer ${bearerToken}`);
 
     const res = await fetch(`${apiUrl}/info`, {
       headers,
@@ -74,12 +84,16 @@ const StreamSession = ({
   apiUrl,
   assistantId,
   authScheme,
+  bearerToken,
+  setBearerToken,
 }: {
   children: ReactNode;
   apiKey: string | null;
   apiUrl: string;
   assistantId: string;
   authScheme?: string;
+  bearerToken: string;
+  setBearerToken: (token: string) => void;
 }) => {
   const [threadId, setThreadId] = useQueryState("threadId");
   const { getThreads, setThreads } = useThreads();
@@ -87,11 +101,14 @@ const StreamSession = ({
     apiUrl,
     apiKey: apiKey ?? undefined,
     assistantId,
-    ...(authScheme && {
       defaultHeaders: {
+      ...(bearerToken && {
+        Authorization: `Bearer ${bearerToken}`,
+      }),
+      ...(authScheme && {
         "X-Auth-Scheme": authScheme,
-      },
-    }),
+     }),
+    },
     threadId: threadId ?? null,
     fetchStateHistory: true,
     onCustomEvent: (event, options) => {
@@ -111,7 +128,7 @@ const StreamSession = ({
   });
 
   useEffect(() => {
-    checkGraphStatus(apiUrl, apiKey, authScheme).then((ok) => {
+    checkGraphStatus(apiUrl, apiKey, authScheme, bearerToken).then((ok) => {
       if (!ok) {
         toast.error("Failed to connect to LangGraph server", {
           description: () => (
@@ -126,12 +143,14 @@ const StreamSession = ({
         });
       }
     });
-  }, [apiKey, apiUrl, authScheme]);
+  }, [apiKey, apiUrl, authScheme, bearerToken]);
 
   return (
-    <StreamContext.Provider value={streamValue}>
-      {children}
-    </StreamContext.Provider>
+    <BearerTokenContext.Provider value={{ bearerToken, setBearerToken }}>
+     <StreamContext.Provider value={streamValue}>
+        {children}
+      </StreamContext.Provider>
+    </BearerTokenContext.Provider>
   );
 };
 
@@ -174,6 +193,20 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   const setApiKey = (key: string) => {
     window.localStorage.setItem("lg:chat:apiKey", key);
     _setApiKey(key);
+  };
+
+  const [bearerToken, _setBearerToken] = useState(
+    () => getBearerToken() ?? "",
+  );
+
+  const setBearerToken = (token: string) => {
+    const normalizedToken = token.trim().replace(/^Bearer\s+/i, "");
+    if (normalizedToken) {
+      window.localStorage.setItem("lg:chat:bearerToken", normalizedToken);
+    } else {
+      window.localStorage.removeItem("lg:chat:bearerToken");
+    }
+    _setBearerToken(normalizedToken);
   };
 
   // Determine final values to use, prioritizing URL params then env vars
@@ -308,6 +341,8 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
       apiUrl={finalApiUrl}
       assistantId={finalAssistantId}
       authScheme={finalAuthScheme || undefined}
+      bearerToken={bearerToken}
+      setBearerToken={setBearerToken}
     >
       {children}
     </StreamSession>
@@ -319,6 +354,14 @@ export const useStreamContext = (): StreamContextType => {
   const context = useContext(StreamContext);
   if (context === undefined) {
     throw new Error("useStreamContext must be used within a StreamProvider");
+  }
+  return context;
+};
+
+export const useBearerToken = (): BearerTokenContextType => {
+  const context = useContext(BearerTokenContext);
+  if (context === undefined) {
+    throw new Error("useBearerToken must be used within a StreamProvider");
   }
   return context;
 };

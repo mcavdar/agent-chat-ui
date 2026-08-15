@@ -596,7 +596,7 @@ export function Thread() {
           </div>
         </div>
       </div>
-     <Sheet
+      <Sheet
         open={bearerTokenSheetOpen}
         onOpenChange={(open) => {
           setBearerTokenSheetOpen(open);
@@ -607,7 +607,8 @@ export function Thread() {
           <SheetHeader>
             <SheetTitle>Kullanıcı Anahtarı</SheetTitle>
             <SheetDescription>
-              Bu anahtar sayesinde kendinize özel chat sayfasına ulaşabilirsiniz.
+              Bu anahtar sayesinde kendinize özel chat sayfasına
+              ulaşabilirsiniz.
               <br />
               Test amaçlı buradaysanız test-token anahtarını kullanabilirsiniz.
             </SheetDescription>
@@ -618,7 +619,9 @@ export function Thread() {
               event.preventDefault();
               setBearerToken(bearerTokenInput);
               setBearerTokenSheetOpen(false);
-              toast.success("Kullanıcı anahtarı kaydedildi. Sayfa 5 saniye içinde yenilenecektir.");
+              toast.success(
+                "Kullanıcı anahtarı kaydedildi. Sayfa 5 saniye içinde yenilenecektir.",
+              );
               window.setTimeout(() => window.location.reload(), 5000);
             }}
           >
@@ -641,7 +644,9 @@ export function Thread() {
                   setBearerToken("");
                   setBearerTokenInput("");
                   setBearerTokenSheetOpen(false);
-                  toast.success("Kullanıcı anahtarı silindi. Sayfa 5 saniye içinde yenilenecektir.");
+                  toast.success(
+                    "Kullanıcı anahtarı silindi. Sayfa 5 saniye içinde yenilenecektir.",
+                  );
                   window.setTimeout(() => window.location.reload(), 5000);
                 }}
               >

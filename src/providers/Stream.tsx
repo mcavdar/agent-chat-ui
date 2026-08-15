@@ -101,13 +101,13 @@ const StreamSession = ({
     apiUrl,
     apiKey: apiKey ?? undefined,
     assistantId,
-      defaultHeaders: {
+    defaultHeaders: {
       ...(bearerToken && {
         Authorization: `Bearer ${bearerToken}`,
       }),
       ...(authScheme && {
         "X-Auth-Scheme": authScheme,
-     }),
+      }),
     },
     threadId: threadId ?? null,
     fetchStateHistory: true,
@@ -147,7 +147,7 @@ const StreamSession = ({
 
   return (
     <BearerTokenContext.Provider value={{ bearerToken, setBearerToken }}>
-     <StreamContext.Provider value={streamValue}>
+      <StreamContext.Provider value={streamValue}>
         {children}
       </StreamContext.Provider>
     </BearerTokenContext.Provider>
@@ -195,9 +195,7 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
     _setApiKey(key);
   };
 
-  const [bearerToken, _setBearerToken] = useState(
-    () => getBearerToken() ?? "",
-  );
+  const [bearerToken, _setBearerToken] = useState(() => getBearerToken() ?? "");
 
   const setBearerToken = (token: string) => {
     const normalizedToken = token.trim().replace(/^Bearer\s+/i, "");

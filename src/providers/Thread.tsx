@@ -88,6 +88,7 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
         apiUrl,
         getApiKey() ?? undefined,
         authScheme || undefined,
+        getBearerToken() ?? undefined,
       );
 
       await client.threads.delete(threadId);

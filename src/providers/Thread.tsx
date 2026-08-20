@@ -15,6 +15,7 @@ import { createClient } from "./client";
 
 interface ThreadContextType {
   getThreads: () => Promise<Thread[]>;
+  deleteThread: (threadId: string) => Promise<void>;
   threads: Thread[];
   setThreads: Dispatch<SetStateAction<Thread[]>>;
   threadsLoading: boolean;
@@ -51,6 +52,7 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
 
   const getThreads = useCallback(async (): Promise<Thread[]> => {
     const resolvedAssistantId = assistantId || envAssistantId;
+
     if (!apiUrl || !resolvedAssistantId) return [];
     const client = createClient(
       apiUrl,
@@ -64,13 +66,41 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
         ...getThreadSearchMetadata(resolvedAssistantId),
       },
       limit: 100,
+      select: [
+        "thread_id",
+        "created_at",
+        "updated_at",
+        "metadata",
+        "status",
+      ],
     });
 
     return threads;
   }, [apiUrl, assistantId, authScheme, envAssistantId]);
 
+  const deleteThread = useCallback(
+    async (threadId: string): Promise<void> => {
+      if (!apiUrl) {
+        throw new Error("LangGraph API URL is not configured.");
+      }
+
+      const client = createClient(
+        apiUrl,
+        getApiKey() ?? undefined,
+        authScheme || undefined,
+      );
+
+      await client.threads.delete(threadId);
+      setThreads((currentThreads) =>
+        currentThreads.filter((thread) => thread.thread_id !== threadId),
+      );
+    },
+    [apiUrl, authScheme],
+  );
+
   const value = {
     getThreads,
+    deleteThread,
     threads,
     setThreads,
     threadsLoading,

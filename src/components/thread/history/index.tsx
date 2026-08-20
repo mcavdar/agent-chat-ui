@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useThreads } from "@/providers/Thread";
 import { Thread } from "@langchain/langgraph-sdk";
-import { useEffect } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { getContentString } from "../utils";
 import { useQueryState, parseAsBoolean } from "nuqs";
@@ -12,7 +13,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PanelRightOpen, PanelRightClose } from "lucide-react";
+import { LoaderCircle, PanelRightOpen, PanelRightClose, Trash2 } from "lucide-react";
+
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 function ThreadList({
@@ -23,6 +25,43 @@ function ThreadList({
   onThreadClick?: (threadId: string) => void;
 }) {
   const [threadId, setThreadId] = useQueryState("threadId");
+
+  const { deleteThread } = useThreads();
+  const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
+
+  const handleDelete = async (
+    event: MouseEvent<HTMLButtonElement>,
+    threadToDelete: string,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (
+      deletingThreadId ||
+      !window.confirm(
+        "Silmek istediğinize emin misiniz?",
+      )
+    ) {
+      return;
+    }
+
+    setDeletingThreadId(threadToDelete);
+    try {
+      await deleteThread(threadToDelete);
+      if (threadToDelete === threadId) {
+        await setThreadId(null);
+      }
+      toast.success("Konuşma silinmiştir.");
+    } catch (error) {
+      console.error("Konuşma silinemedi.", error);
+      toast.error("Konuşma silinemedi.", {
+        description: "Hata oluştu. Lütfen sistem yöneticisine bilgi veriniz.",
+      });
+    } finally {
+      setDeletingThreadId(null);
+    }
+  };
+
 
   return (
     <div className="flex h-full w-full flex-col items-start justify-start gap-2 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">
@@ -41,11 +80,11 @@ function ThreadList({
         return (
           <div
             key={t.thread_id}
-            className="w-full px-1"
+            className="flex w-full items-center gap-1 px-1"
           >
             <Button
               variant="ghost"
-              className="w-[280px] items-start justify-start text-left font-normal"
+              className="min-w-0 flex-1 items-start justify-start text-left font-normal"
               onClick={(e) => {
                 e.preventDefault();
                 onThreadClick?.(t.thread_id);
@@ -54,6 +93,21 @@ function ThreadList({
               }}
             >
               <p className="truncate text-ellipsis">{itemText}</p>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
+              aria-label={`Konuşma sil ${itemText}`}
+              title="Konuşma sil"
+              disabled={deletingThreadId !== null}
+              onClick={(event) => handleDelete(event, t.thread_id)}
+            >
+              {deletingThreadId === t.thread_id ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <Trash2 />
+              )}
             </Button>
           </div>
         );
@@ -110,7 +164,7 @@ export default function ThreadHistory() {
             )}
           </Button>
           <h1 className="text-xl font-semibold tracking-tight">
-            Thread History
+            Konuşma Geçmişi
           </h1>
         </div>
         {threadsLoading ? (
@@ -132,7 +186,7 @@ export default function ThreadHistory() {
             className="flex lg:hidden"
           >
             <SheetHeader>
-              <SheetTitle>Thread History</SheetTitle>
+              <SheetTitle>Konuşma Geçmişi</SheetTitle>
             </SheetHeader>
             <ThreadList
               threads={threads}

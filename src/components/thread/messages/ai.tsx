@@ -15,6 +15,11 @@ import { ThreadView } from "../agent-inbox";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { GenericInterruptView } from "./generic-interrupt";
 import { useArtifact } from "../artifact";
+import type {
+  BaseStream,
+  DefaultToolCall,
+  BagTemplate
+} from "@langchain/langgraph-sdk";
 
 function CustomComponent({
   message,
@@ -115,6 +120,17 @@ export function AssistantMessage({
     parseAsBoolean.withDefault(false),
   );
 
+  const [threadId] = useQueryState("threadId");
+
+  const [apiUrl] = useQueryState("apiUrl", {
+    defaultValue: process.env.NEXT_PUBLIC_API_URL || "",
+  });
+  const [authScheme] = useQueryState("authScheme", {
+    defaultValue: process.env.NEXT_PUBLIC_AUTH_SCHEME || "",
+  });
+
+
+
   const thread = useStreamContext();
   const isLastMessage =
     thread.messages[thread.messages.length - 1].id === message?.id;
@@ -208,6 +224,10 @@ export function AssistantMessage({
                 isLoading={isLoading}
                 isAiMessage={true}
                 handleRegenerate={() => handleRegenerate(parentCheckpoint)}
+                messageId={message?.id}
+                threadId={threadId ?? null}
+                apiUrl={apiUrl || undefined}
+                authScheme={authScheme || undefined}
               />
             </div>
           </>

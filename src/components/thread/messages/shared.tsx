@@ -33,7 +33,7 @@ function ContentCopyable({
     <TooltipIconButton
       onClick={(e) => handleCopy(e)}
       variant="ghost"
-      tooltip="Copy content"
+      tooltip="Kopyala"
       disabled={disabled}
     >
       <AnimatePresence
@@ -124,6 +124,10 @@ export function CommandBar({
   handleSubmitEdit,
   handleRegenerate,
   isLoading,
+  messageId,
+  threadId,
+  apiUrl,
+  authScheme,
 }: {
   content: string;
   isHumanMessage?: boolean;
@@ -133,6 +137,10 @@ export function CommandBar({
   handleSubmitEdit?: () => void;
   handleRegenerate?: () => void;
   isLoading: boolean;
+  messageId?: string;
+  threadId?: string | null;
+  apiUrl?: string;
+  authScheme?: string;
 }) {
   if (isHumanMessage && isAiMessage) {
     throw new Error(
@@ -197,7 +205,7 @@ export function CommandBar({
       {isAiMessage && !!handleRegenerate && (
         <TooltipIconButton
           disabled={isLoading}
-          tooltip="Refresh"
+          tooltip="Tekrar üret"
           variant="ghost"
           onClick={handleRegenerate}
         >
@@ -207,7 +215,7 @@ export function CommandBar({
       {showEdit && (
         <TooltipIconButton
           disabled={isLoading}
-          tooltip="Edit"
+          tooltip="Düzelt"
           variant="ghost"
           onClick={() => {
             setIsEditing?.(true);
